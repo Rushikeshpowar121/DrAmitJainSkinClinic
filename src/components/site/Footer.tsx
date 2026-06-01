@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { MapPin, Phone, Mail, Instagram, Facebook, Youtube, Clock } from "lucide-react";
+import { MapPin, Phone, Mail, Instagram, Facebook, Youtube, Clock, Lock } from "lucide-react";
 import { getClinicSettings, getServices } from "@/lib/firebaseServices";
 import { clinic as fallbackClinic } from "@/lib/clinic";
 import { services as fallbackServices } from "@/lib/data";
@@ -77,8 +77,18 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t/50 border-t border-white/40">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-muted-foreground md:flex-row">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-5 text-xs text-muted-foreground md:flex-row">
           <p>© {new Date().getFullYear()} {clinic.name}. All rights reserved.</p>
+          <div className="flex items-center gap-3">
+            <Link to="/admin" className="hover:text-foreground transition-colors flex items-center gap-1">
+              <Lock className="h-3 w-3" />
+              <span>Admin Login</span>
+            </Link>
+            <span className="text-muted-foreground/30">|</span>
+            <Link to="/receptionist" className="hover:text-foreground transition-colors flex items-center gap-1">
+              <span>Receptionist Login</span>
+            </Link>
+          </div>
           <p>Designed with care · Premium dermatology in Katraj, Pune</p>
         </div>
       </div>
