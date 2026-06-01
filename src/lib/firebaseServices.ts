@@ -1,5 +1,5 @@
 import { db } from "./firebase";
-import { collection, getDocs, getDoc, doc, addDoc } from "firebase/firestore";
+import { collection, getDocs, getDoc, doc, addDoc, updateDoc } from "firebase/firestore";
 import { clinic as fallbackClinic } from "./clinic";
 import {
   services as fallbackServices,
@@ -23,9 +23,24 @@ async function safeQuery<T>(fetchFn: () => Promise<T>, fallback: T): Promise<T> 
 // 1. Get Clinic Settings
 export async function getClinicSettings() {
   return safeQuery(async () => {
-    const docSnap = await getDoc(doc(db, "settings", "clinic"));
+    const docRef = doc(db, "settings", "clinic");
+    const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      return docSnap.data() as typeof fallbackClinic;
+      const data = docSnap.data();
+      // Self-healing: if the database has the old phone number, automatically update it to the new number
+      if (data.phoneRaw === "918830196976" || data.phone === "+91 88301 96976") {
+        const updated = {
+          ...data,
+          phone: "+91 92443 23441",
+          phoneRaw: "919244323441",
+        };
+        await updateDoc(docRef, {
+          phone: "+91 92443 23441",
+          phoneRaw: "919244323441",
+        });
+        return updated as typeof fallbackClinic;
+      }
+      return data as typeof fallbackClinic;
     }
     return fallbackClinic;
   }, fallbackClinic);

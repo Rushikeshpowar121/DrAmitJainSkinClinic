@@ -21,7 +21,7 @@ export function WhatsAppFab() {
     setChatOpen(false);
   };
 
-  const cleanPhone = clinic.phoneRaw || "918830196976";
+  const cleanPhone = clinic.phoneRaw || "919244323441";
 
   return (
     <>
