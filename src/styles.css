@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -175,7 +176,8 @@
   h2,
   h3,
   h4 {
-    letter-spacing: -0.02em;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    letter-spacing: -0.01em;
     font-weight: 700;
   }
 }
@@ -205,6 +207,19 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  .text-cursive {
+    font-family: "Cormorant Garamond", Georgia, serif !important;
+    font-weight: 600 !important;
+    font-style: italic !important;
+    letter-spacing: -0.01em !important;
+    background: linear-gradient(135deg, var(--primary) 20%, var(--accent-foreground) 80%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+    display: inline-block;
+    padding-bottom: 0.05em;
   }
 
   .text-gradient-teal {

@@ -1,8 +1,8 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  CalendarCheck, FileText, Home, Image as ImageIcon, LayoutDashboard,
-  MessageSquare, Settings, Sparkles, LogOut, Lock, HelpCircle, Menu, X, Search
+  CalendarCheck, FileText, Home, LayoutDashboard, LogOut, Lock, 
+  Menu, X, ShieldCheck, Users
 } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
@@ -10,24 +10,16 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Admin Portal · Dr Jain's Skin Care Clinic" }] }),
-  component: AdminGatekeeper,
+export const Route = createFileRoute("/receptionist")({
+  head: () => ({ meta: [{ title: "Receptionist Portal · Dr Jain's Skin Care Clinic" }] }),
+  component: ReceptionistGatekeeper,
 });
 
 const nav = [
-  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/admin/homepage", label: "Homepage", icon: Home },
-  { to: "/admin/services", label: "Services", icon: Sparkles },
-  { to: "/admin/blogs", label: "Blogs", icon: FileText },
-  { to: "/admin/gallery", label: "Gallery", icon: ImageIcon },
-  { to: "/admin/appointments", label: "Appointments", icon: CalendarCheck },
-  { to: "/admin/testimonials", label: "Testimonials", icon: MessageSquare },
-  { to: "/admin/seo", label: "SEO", icon: Search },
-  { to: "/admin/faqs", label: "FAQs", icon: HelpCircle },
+  { to: "/receptionist", label: "Clinic CRM", icon: LayoutDashboard, exact: true },
 ];
 
-function AdminGatekeeper() {
+function ReceptionistGatekeeper() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -50,8 +42,17 @@ function AdminGatekeeper() {
     }
     setSigningIn(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toast.success("Successfully authenticated!");
+      const uCredential = await signInWithEmailAndPassword(auth, email, password);
+      const emailLower = (uCredential.user?.email || "").toLowerCase();
+      
+      // Role checking
+      if (!emailLower.includes("recep") && !emailLower.includes("admin")) {
+        await signOut(auth);
+        toast.error("Access Denied: Only receptionist or admin accounts are allowed here.");
+        return;
+      }
+      
+      toast.success("Receptionist authenticated successfully!");
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to log in.");
@@ -62,7 +63,7 @@ function AdminGatekeeper() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    toast.success("Successfully logged out.");
+    toast.success("Logged out successfully.");
   };
 
   if (loading) {
@@ -70,23 +71,23 @@ function AdminGatekeeper() {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="mt-3 text-sm text-muted-foreground font-bold">Verifying access rights...</p>
+          <p className="mt-3 text-sm text-muted-foreground font-bold">Verifying clinic credentials...</p>
         </div>
       </div>
     );
   }
 
-  // Gatekeeping: If no user is logged in, show the styled login sheet
+  // Gatekeeping: If no user is logged in, show the styled receptionist login sheet
   if (!user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-soft-band/30 px-4">
         <div className="w-full max-w-md rounded-[2rem] border bg-white/90 p-8 shadow-xl backdrop-blur-md animate-fade-up">
           <div className="text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-primary">
-              <Lock className="h-6 w-6" />
+              <Users className="h-6 w-6" />
             </div>
-            <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-foreground">Clinic CRM Login</h1>
-            <p className="mt-1.5 text-xs text-muted-foreground font-semibold">Authorized access portal for Dr Jain's Skin Care Clinic</p>
+            <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-foreground">Receptionist CRM Login</h1>
+            <p className="mt-1.5 text-xs text-muted-foreground font-semibold">Calibrated access for Dr Jain's reception desk</p>
           </div>
           
           <form onSubmit={handleLogin} className="mt-6 space-y-4">
@@ -94,7 +95,7 @@ function AdminGatekeeper() {
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Email address</label>
               <input
                 type="email"
-                placeholder="admin@jainskinclinic.in"
+                placeholder="receptionist@jainskinclinic.in"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-xl border bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
@@ -112,11 +113,14 @@ function AdminGatekeeper() {
             </div>
             
             <Button type="submit" disabled={signingIn} className="mt-2 w-full rounded-xl py-6 font-bold shadow-md">
-              {signingIn ? "Authenticating credentials..." : "Sign In to Admin Workspace"}
+              {signingIn ? "Verifying desk access..." : "Sign In to Desk Workspace"}
             </Button>
           </form>
           
-          <div className="mt-6 border-t pt-4 text-center">
+          <div className="mt-6 border-t pt-4 text-center flex flex-col gap-2">
+            <Link to="/admin" className="text-xs text-primary hover:underline transition-colors font-bold">
+              Access Admin Workspace instead
+            </Link>
             <Link to="/" className="text-xs text-muted-foreground hover:text-primary transition-colors font-bold">
               Return to clinic homepage
             </Link>
@@ -126,47 +130,36 @@ function AdminGatekeeper() {
     );
   }
 
-  // If user is a receptionist, restrict access
-  const isReceptionist = user?.email && user.email.toLowerCase().includes("recep");
-  if (isReceptionist) {
+  // Double check role gatekeeping
+  const emailLower = (user?.email || "").toLowerCase();
+  if (!emailLower.includes("recep") && !emailLower.includes("admin")) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-soft-band/30 px-4">
-        <div className="w-full max-w-md rounded-[2rem] border bg-white/90 p-8 shadow-xl backdrop-blur-md text-center animate-fade-up">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
-            <Lock className="h-6 w-6" />
-          </div>
-          <h1 className="mt-4 text-xl font-extrabold tracking-tight text-foreground">Access Denied</h1>
-          <p className="mt-2 text-xs text-muted-foreground font-semibold leading-relaxed">
-            Receptionist accounts are restricted from accessing the main Admin Workspace.
-          </p>
-          <div className="mt-6 flex flex-col gap-2">
-            <Button asChild className="rounded-xl py-5 font-bold shadow-md bg-primary">
-              <Link to="/receptionist">Go to Receptionist Portal</Link>
-            </Button>
-            <Button onClick={handleLogout} variant="outline" className="rounded-xl py-5 font-bold">
-              Sign out
-            </Button>
-          </div>
+        <div className="w-full max-w-md rounded-[2rem] border bg-white/90 p-8 shadow-xl backdrop-blur-md text-center">
+          <Lock className="h-10 w-10 text-destructive mx-auto mb-4" />
+          <h1 className="text-xl font-extrabold">Unauthorized</h1>
+          <p className="text-xs text-muted-foreground font-semibold mt-2">Your account does not have permission to view the Receptionist Desk.</p>
+          <Button onClick={handleLogout} className="mt-4 rounded-xl font-bold bg-primary w-full py-4">Sign Out</Button>
         </div>
       </div>
     );
   }
 
-  // Admin View
-  return <AdminLayout handleLogout={handleLogout} />;
+  // Receptionist View
+  return <ReceptionistLayout handleLogout={handleLogout} />;
 }
 
-function AdminLayout({ handleLogout }: { handleLogout: () => void }) {
+function ReceptionistLayout({ handleLogout }: { handleLogout: () => void }) {
   const loc = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-soft-band/40 flex flex-col">
-      {/* 1. MOBILE HEADER BAR (Visible only under lg responsive breakpoint) */}
+      {/* 1. MOBILE HEADER BAR */}
       <header className="lg:hidden sticky top-0 z-30 w-full glass border-b border-primary/10 px-4 py-3 flex items-center justify-between shadow-sm">
         <Link to="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-secondary text-xs font-bold text-primary">DJ</div>
-          <span className="text-sm font-extrabold tracking-tight text-foreground">Clinic Admin</span>
+          <span className="text-sm font-extrabold tracking-tight text-foreground">Clinic Desk</span>
         </Link>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -184,7 +177,7 @@ function AdminLayout({ handleLogout }: { handleLogout: () => void }) {
               <div className="flex items-center justify-between border-b pb-3 mb-4">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-secondary text-xs font-bold text-primary">DJ</div>
-                  <span className="text-sm font-extrabold text-foreground">Clinic Admin</span>
+                  <span className="text-sm font-extrabold text-foreground">Clinic Desk</span>
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
@@ -220,7 +213,7 @@ function AdminLayout({ handleLogout }: { handleLogout: () => void }) {
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all"
               >
-                <Settings className="h-4 w-4" /> Back to website
+                <Home className="h-4 w-4" /> Back to website
               </Link>
               <button
                 onClick={() => {
@@ -234,19 +227,17 @@ function AdminLayout({ handleLogout }: { handleLogout: () => void }) {
             </div>
           </div>
           
-          {/* Click outside sidebar to close */}
           <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
         </div>
       )}
 
       {/* 3. DESKTOP SIDEBAR + PAGE CONTENT STRUCTURE */}
       <div className="mx-auto flex w-full max-w-[1400px] gap-6 px-4 py-6 flex-col lg:flex-row flex-1">
-        {/* Sticky sidebar only rendered on desktop width */}
         <aside className="sticky top-6 hidden h-[calc(100vh-3rem)] w-64 shrink-0 rounded-3xl border bg-white/85 p-4 lg:flex lg:flex-col lg:justify-between shadow-sm">
           <div>
             <Link to="/" className="flex items-center gap-2 px-2 py-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-xs font-bold text-primary">DJ</div>
-              <div className="text-sm font-extrabold tracking-tight">Clinic Admin</div>
+              <div className="text-sm font-extrabold tracking-tight">Clinic Desk CRM</div>
             </Link>
             <nav className="mt-4 space-y-0.5">
               {nav.map((n) => {
@@ -262,7 +253,7 @@ function AdminLayout({ handleLogout }: { handleLogout: () => void }) {
           
           <div className="space-y-2">
             <Link to="/" className="flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all">
-              <Settings className="h-4 w-4" /> Back to website
+              <Home className="h-4 w-4" /> Back to website
             </Link>
             <button onClick={handleLogout} className="w-full flex items-center gap-2 rounded-xl bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive hover:text-destructive-foreground transition-all">
               <LogOut className="h-4 w-4" /> Log out
@@ -270,7 +261,6 @@ function AdminLayout({ handleLogout }: { handleLogout: () => void }) {
           </div>
         </aside>
         
-        {/* Dynamic children CMS route displays */}
         <main className="min-w-0 flex-1">
           <Outlet />
         </main>

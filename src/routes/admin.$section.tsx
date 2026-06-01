@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Plus, CalendarCheck, Home, Sparkles, FileText, Image as ImageIcon,
-  MessageSquare, Search, Trash2, Save, ArrowLeft, Loader2, Edit3, X, HelpCircle
+  MessageSquare, Search, Trash2, Save, ArrowLeft, Loader2, Edit3, X, HelpCircle, Phone
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import {
@@ -1062,6 +1062,7 @@ function AdminSection() {
                 let statusBadge = "bg-amber-100 text-amber-800 border-amber-200";
                 if (status === "confirmed") statusBadge = "bg-blue-100 text-blue-800 border-blue-200";
                 if (status === "done") statusBadge = "bg-emerald-100 text-emerald-800 border-emerald-200";
+                if (status === "cancelled") statusBadge = "bg-destructive/10 text-destructive border-destructive/20";
 
                 return (
                   <div key={a.id} className="rounded-xl border bg-white p-5 space-y-3 relative shadow-sm hover:shadow-md transition-shadow">
@@ -1087,7 +1088,18 @@ function AdminSection() {
                     </div>
 
                     <div className="text-[11px] text-muted-foreground leading-normal border-t pt-3">
-                      <div className="font-semibold text-foreground">{a.phone} · {a.email}</div>
+                      <div className="font-semibold text-foreground flex items-center flex-wrap gap-1.5">
+                        <a 
+                          href={`tel:${a.phone}`} 
+                          className="inline-flex items-center gap-1 text-primary hover:text-primary/80 font-bold hover:underline"
+                          title={`Click to call ${a.phone}`}
+                        >
+                          <Phone className="h-3 w-3 text-primary shrink-0" />
+                          <span>{a.phone}</span>
+                        </a>
+                        <span>·</span>
+                        <span>{a.email}</span>
+                      </div>
                       <div className="italic mt-1 text-muted-foreground bg-secondary/10 rounded p-2 border border-secondary/20">"{a.message || "No custom message provided"}"</div>
                     </div>
 
@@ -1116,6 +1128,14 @@ function AdminSection() {
                         }`}
                       >
                         Done
+                      </button>
+                      <button 
+                        onClick={() => handleUpdateAppointmentStatus(a.id, "Cancelled")}
+                        className={`px-2.5 py-1 text-[10px] font-extrabold rounded-lg border transition-all ${
+                          status === "cancelled" ? "bg-destructive text-white border-destructive shadow-sm" : "bg-white hover:bg-destructive/10 border-gray-200 text-destructive"
+                        }`}
+                      >
+                        Cancel
                       </button>
                     </div>
                   </div>

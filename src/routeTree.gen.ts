@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TestimonialsRouteImport } from './routes/testimonials'
+import { Route as ReceptionistRouteImport } from './routes/receptionist'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AppointmentRouteImport } from './routes/appointment'
@@ -17,6 +18,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ServicesIndexRouteImport } from './routes/services.index'
+import { Route as ReceptionistIndexRouteImport } from './routes/receptionist.index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ServicesSlugRouteImport } from './routes/services.$slug'
@@ -26,6 +28,11 @@ import { Route as AdminSectionRouteImport } from './routes/admin.$section'
 const TestimonialsRoute = TestimonialsRouteImport.update({
   id: '/testimonials',
   path: '/testimonials',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReceptionistRoute = ReceptionistRouteImport.update({
+  id: '/receptionist',
+  path: '/receptionist',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GalleryRoute = GalleryRouteImport.update({
@@ -63,6 +70,11 @@ const ServicesIndexRoute = ServicesIndexRouteImport.update({
   path: '/services/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReceptionistIndexRoute = ReceptionistIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ReceptionistRoute,
+} as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
@@ -96,12 +108,14 @@ export interface FileRoutesByFullPath {
   '/appointment': typeof AppointmentRoute
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
+  '/receptionist': typeof ReceptionistRouteWithChildren
   '/testimonials': typeof TestimonialsRoute
   '/admin/$section': typeof AdminSectionRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
+  '/receptionist/': typeof ReceptionistIndexRoute
   '/services/': typeof ServicesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -116,6 +130,7 @@ export interface FileRoutesByTo {
   '/services/$slug': typeof ServicesSlugRoute
   '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
+  '/receptionist': typeof ReceptionistIndexRoute
   '/services': typeof ServicesIndexRoute
 }
 export interface FileRoutesById {
@@ -126,12 +141,14 @@ export interface FileRoutesById {
   '/appointment': typeof AppointmentRoute
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
+  '/receptionist': typeof ReceptionistRouteWithChildren
   '/testimonials': typeof TestimonialsRoute
   '/admin/$section': typeof AdminSectionRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
+  '/receptionist/': typeof ReceptionistIndexRoute
   '/services/': typeof ServicesIndexRoute
 }
 export interface FileRouteTypes {
@@ -143,12 +160,14 @@ export interface FileRouteTypes {
     | '/appointment'
     | '/contact'
     | '/gallery'
+    | '/receptionist'
     | '/testimonials'
     | '/admin/$section'
     | '/blog/$slug'
     | '/services/$slug'
     | '/admin/'
     | '/blog/'
+    | '/receptionist/'
     | '/services/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -163,6 +182,7 @@ export interface FileRouteTypes {
     | '/services/$slug'
     | '/admin'
     | '/blog'
+    | '/receptionist'
     | '/services'
   id:
     | '__root__'
@@ -172,12 +192,14 @@ export interface FileRouteTypes {
     | '/appointment'
     | '/contact'
     | '/gallery'
+    | '/receptionist'
     | '/testimonials'
     | '/admin/$section'
     | '/blog/$slug'
     | '/services/$slug'
     | '/admin/'
     | '/blog/'
+    | '/receptionist/'
     | '/services/'
   fileRoutesById: FileRoutesById
 }
@@ -188,6 +210,7 @@ export interface RootRouteChildren {
   AppointmentRoute: typeof AppointmentRoute
   ContactRoute: typeof ContactRoute
   GalleryRoute: typeof GalleryRoute
+  ReceptionistRoute: typeof ReceptionistRouteWithChildren
   TestimonialsRoute: typeof TestimonialsRoute
   BlogSlugRoute: typeof BlogSlugRoute
   ServicesSlugRoute: typeof ServicesSlugRoute
@@ -202,6 +225,13 @@ declare module '@tanstack/react-router' {
       path: '/testimonials'
       fullPath: '/testimonials'
       preLoaderRoute: typeof TestimonialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/receptionist': {
+      id: '/receptionist'
+      path: '/receptionist'
+      fullPath: '/receptionist'
+      preLoaderRoute: typeof ReceptionistRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gallery': {
@@ -253,6 +283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/receptionist/': {
+      id: '/receptionist/'
+      path: '/'
+      fullPath: '/receptionist/'
+      preLoaderRoute: typeof ReceptionistIndexRouteImport
+      parentRoute: typeof ReceptionistRoute
+    }
     '/blog/': {
       id: '/blog/'
       path: '/blog'
@@ -303,6 +340,18 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface ReceptionistRouteChildren {
+  ReceptionistIndexRoute: typeof ReceptionistIndexRoute
+}
+
+const ReceptionistRouteChildren: ReceptionistRouteChildren = {
+  ReceptionistIndexRoute: ReceptionistIndexRoute,
+}
+
+const ReceptionistRouteWithChildren = ReceptionistRoute._addFileChildren(
+  ReceptionistRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -310,6 +359,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppointmentRoute: AppointmentRoute,
   ContactRoute: ContactRoute,
   GalleryRoute: GalleryRoute,
+  ReceptionistRoute: ReceptionistRouteWithChildren,
   TestimonialsRoute: TestimonialsRoute,
   BlogSlugRoute: BlogSlugRoute,
   ServicesSlugRoute: ServicesSlugRoute,

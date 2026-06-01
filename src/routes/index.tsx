@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  ArrowRight, Award, CalendarCheck, CheckCircle2, MessageCircle, ShieldCheck, Sparkles, Star, Heart, Check, HelpCircle
+  ArrowRight, Award, CalendarCheck, CheckCircle2, MessageCircle, ShieldCheck, Sparkles, Star, Heart, Check, HelpCircle,
+  X, PhoneCall, Loader2, User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -22,8 +23,32 @@ import {
   getDoctorInfo,
   getServices,
   getTestimonials,
-  getFAQs
+  getFAQs,
+  getGallery,
+  createAppointment
 } from "@/lib/firebaseServices";
+import { toast } from "sonner";
+
+const googleAvatarColors = [
+  "bg-red-500 text-white",
+  "bg-blue-500 text-white",
+  "bg-green-600 text-white",
+  "bg-yellow-500 text-white",
+  "bg-purple-500 text-white",
+  "bg-pink-500 text-white",
+  "bg-indigo-500 text-white",
+  "bg-orange-500 text-white",
+  "bg-teal-500 text-white"
+];
+
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % googleAvatarColors.length;
+  return googleAvatarColors[index];
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -50,6 +75,7 @@ function HomePage() {
       <FAQSection />
       <MapSectionComponent />
       <ContactCTASection />
+      <CallbackPopup />
     </SiteLayout>
   );
 }
@@ -92,7 +118,7 @@ function Hero() {
             <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Trusted Dermatology · Katraj, Pune
           </span>
           <h1 className="mt-4 text-4xl font-extrabold leading-[1.1] tracking-tight text-foreground md:text-[3.25rem] lg:text-[3.75rem]">
-            {hero.title.split("starts with")[0]} <span className="text-gradient">Skin & Hair</span> Care
+            {hero.title.split("starts with")[0]} <span className="text-cursive text-5xl md:text-[3.75rem] lg:text-[4.25rem] inline-block font-normal">Skin & Hair</span> Care
           </h1>
           <p className="mt-5 max-w-xl text-sm text-muted-foreground md:text-base leading-relaxed">
             {hero.subtitle} Led by <strong className="text-foreground">{clinic.doctor}</strong> — {clinic.credentials.split("(")[0].trim()}.
@@ -333,7 +359,7 @@ function Highlights() {
       <div className="mx-auto max-w-7xl px-4">
         <SectionHeading 
           eyebrow="What we treat" 
-          title="Personalised skin & hair specialties" 
+          title={<>Personalised <span className="text-cursive font-normal text-4xl md:text-[2.75rem]">skin & hair</span> specialties</>} 
           description="Every clinical solution is calibrated under a single specialist to achieve maximum safety and natural results." 
         />
         <div className="grid gap-6 md:grid-cols-3">
@@ -366,21 +392,41 @@ function Highlights() {
 }
 
 function BeforeAfter() {
-  const sets = [
-    { label: "Acne Control", before: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=900&q=70", after: "https://images.unsplash.com/photo-1556228852-80b6e5eeff06?w=900&q=70" },
-    { label: "Pigmentation & Tone", before: "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=900&q=70", after: "https://images.unsplash.com/photo-1614109800763-7b46d0a9ad44?w=900&q=70" },
-    { label: "Hair Density (PRP)", before: "https://images.unsplash.com/photo-1559599101-f09722fb4948?w=900&q=70", after: "https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=900&q=70" },
-  ];
+  const [sets, setSets] = useState<any[]>([]);
+
+  useEffect(() => {
+    getGallery().then((galleryItems) => {
+      // Find all gallery items that have beforeSrc and afterSrc defined
+      const bAndA = galleryItems.filter((g: any) => g.beforeSrc && g.afterSrc);
+      if (bAndA.length > 0) {
+        setSets(bAndA.map((g: any) => ({
+          label: g.caption || "Clinical Transform",
+          before: g.beforeSrc,
+          after: g.afterSrc
+        })));
+      } else {
+        // Static default fallbacks if none are uploaded in the database
+        setSets([
+          { label: "Acne Control", before: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=900&q=70", after: "https://images.unsplash.com/photo-1556228852-80b6e5eeff06?w=900&q=70" },
+          { label: "Pigmentation & Tone", before: "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=900&q=70", after: "https://images.unsplash.com/photo-1614109800763-7b46d0a9ad44?w=900&q=70" },
+          { label: "Hair Density (PRP)", before: "https://images.unsplash.com/photo-1559599101-f09722fb4948?w=900&q=70", after: "https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=900&q=70" },
+        ]);
+      }
+    });
+  }, []);
+
+  if (sets.length === 0) return null;
+
   return (
     <section className="mx-auto max-w-7xl px-4 py-14 md:py-16">
       <SectionHeading 
         eyebrow="Clinical results" 
-        title="Transformative patient results" 
+        title={<>Transformative <span className="text-cursive font-normal text-4xl md:text-[2.75rem]">patient results</span></>} 
         description="A real-world showcase of dermatological success. Specific clinical outcomes differ; consultation is recommended." 
       />
       <div className="grid gap-6 md:grid-cols-3">
-        {sets.map((s) => (
-          <div key={s.label} className="group overflow-hidden rounded-2xl border bg-white/70 shadow-sm border-glow-hover transition-all duration-300 hover:shadow-lg">
+        {sets.map((s, idx) => (
+          <div key={s.label + idx} className="group overflow-hidden rounded-2xl border bg-white/70 shadow-sm border-glow-hover transition-all duration-300 hover:shadow-lg">
             <div className="grid grid-cols-2 relative">
               <div className="relative aspect-[4/5] overflow-hidden">
                 <img src={s.before} alt={`${s.label} before`} className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
@@ -415,7 +461,7 @@ function ServicesOverview() {
       <div className="mx-auto max-w-7xl px-4">
         <SectionHeading
           eyebrow="Our clinical services"
-          title="Evidence-based dermatology treatments"
+          title={<>Evidence-based <span className="text-cursive font-normal text-4xl md:text-[2.75rem]">dermatology</span> treatments</>}
           description="Gentle protocols matched with state-of-the-art diagnostic technology for maximum patient comfort."
         />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -464,7 +510,7 @@ function WhyChooseUs() {
       <div className="mx-auto max-w-7xl px-4">
         <SectionHeading 
           eyebrow="Clinical Integrity" 
-          title="Why Choose Dr. Amit Jain" 
+          title={<>Why Choose <span className="text-cursive font-normal text-4xl md:text-[2.75rem]">Dr. Amit Jain</span></>} 
         />
         
         <div className="mt-12 grid gap-10 lg:grid-cols-12 items-center">
@@ -478,7 +524,7 @@ function WhyChooseUs() {
               </span>
               
               <h3 className="mt-6 text-2xl md:text-3xl font-extrabold tracking-tight text-foreground leading-[1.15]">
-                Dermatology built on clinical <span className="text-gradient">Integrity</span>
+                Dermatology built on clinical <span className="text-cursive font-normal text-3xl md:text-[2.25rem]">Integrity</span>
               </h3>
               
               <p className="mt-4 text-xs md:text-sm text-muted-foreground leading-relaxed">
@@ -542,7 +588,7 @@ function TestimonialsSection() {
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-14 md:py-16">
-      <SectionHeading eyebrow="Patient success stories" title="Loved by our patients" />
+      <SectionHeading eyebrow="Patient success stories" title={<>Loved by <span className="text-cursive font-normal text-4xl md:text-[2.75rem]">our patients</span></>} />
       <div className="grid gap-6 md:grid-cols-3">
         {testimonials.slice(0, 3).map((t, idx) => (
           <TestimonialCard key={idx} t={t} />
@@ -592,20 +638,37 @@ function GoogleReviewsSection() {
             </div>
           </div>
           <div className="grid gap-4">
-            {testimonials.slice(1, 3).map((t, idx) => (
-              <div key={idx} className="rounded-2xl border bg-white/90 p-5 shadow-sm hover:-translate-y-0.5 transition-all">
-                <div className="flex items-center justify-between">
-                  <div className="font-bold text-xs text-foreground">{t.name}</div>
-                  <span className="rounded-full bg-secondary/80 px-2 py-0.5 text-[10px] font-semibold text-secondary-foreground">{t.concern}</span>
+            {testimonials.slice(1, 3).map((t, idx) => {
+              const avatarColor = getAvatarColor(t.name);
+              const initials = t.name ? t.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() : "G";
+              return (
+                <div key={idx} className="group relative rounded-2xl border border-secondary bg-white p-5 shadow-sm hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="absolute right-4 top-4 opacity-50 group-hover:opacity-100 transition-opacity">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22c-.62-.57-1.02-1.34-1.21-2.63z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold ${avatarColor} border border-black/5 shadow-3xs`}>
+                      {initials}
+                    </div>
+                    <div>
+                      <div className="font-extrabold text-xs text-foreground">{t.name}</div>
+                      <div className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">{t.concern}</div>
+                    </div>
+                  </div>
+                  <div className="mt-2.5 flex gap-0.5">
+                    {Array.from({ length: t.rating }).map((_, i) => (
+                      <Star key={i} className="h-3.5 w-3.5 fill-[#FBBC05] text-[#FBBC05]" />
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground leading-relaxed font-medium">"{t.text}"</p>
                 </div>
-                <div className="mt-1.5 flex gap-0.5">
-                  {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="mt-2.5 text-xs text-muted-foreground leading-relaxed italic">"{t.text}"</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -622,7 +685,7 @@ function FAQSection() {
 
   return (
     <section className="mx-auto max-w-4xl px-4 py-14 md:py-16">
-      <SectionHeading eyebrow="Common doubts" title="Frequently asked questions" />
+      <SectionHeading eyebrow="Common doubts" title={<>Frequently asked <span className="text-cursive font-normal text-4xl md:text-[2.75rem]">questions</span></>} />
       <Accordion type="single" collapsible className="rounded-2xl border bg-white/70 shadow-sm border-glow-hover p-2 space-y-2">
         {faqs.map((f, i) => (
           <AccordionItem key={i} value={`f-${i}`} className="border-b last:border-b-0 px-4 rounded-xl hover:bg-secondary/40 transition-colors">
@@ -644,7 +707,7 @@ function MapSectionComponent() {
 
   return (
     <section className="mx-auto max-w-7xl px-4 pb-14 md:pb-16">
-      <SectionHeading eyebrow="Our location" title="Visit Dr Jain's Skin Care Clinic" description={`${clinic.address.line1}, ${clinic.address.line2}, ${clinic.address.city}.`} />
+      <SectionHeading eyebrow="Our location" title={<>Visit <span className="text-cursive font-normal text-4xl md:text-[2.75rem]">our skin clinic</span></>} description={`${clinic.address.line1}, ${clinic.address.line2}, ${clinic.address.city}.`} />
       <div className="overflow-hidden rounded-3xl border-4 border-white bg-white shadow-xl">
         <iframe title="Clinic location" src={clinic.mapEmbed} className="h-[380px] w-full" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
       </div>
@@ -654,40 +717,380 @@ function MapSectionComponent() {
 
 function ContactCTASection() {
   const [clinic, setClinic] = useState(fallbackClinic);
+  const [services, setServices] = useState(fallbackServices);
+  
+  // Form states
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [service, setService] = useState("general");
+  const [date, setDate] = useState("");
+  const [notes, setNotes] = useState("");
+  const [booking, setBooking] = useState(false);
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
     getClinicSettings().then(setClinic);
+    getServices().then(setServices);
   }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !phone || !date) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+    setBooking(true);
+    try {
+      const payload = {
+        name,
+        phone,
+        email: "",
+        service,
+        preferredDate: `${date}`,
+        message: `Direct Website Booking. Notes: ${notes || "None"}`
+      };
+      await createAppointment(payload);
+      toast.success("Appointment request submitted successfully!");
+      setDone(true);
+      setName("");
+      setPhone("");
+      setDate("");
+      setNotes("");
+    } catch (err: any) {
+      toast.error("Booking failed: " + err.message);
+    } finally {
+      setBooking(false);
+    }
+  };
 
   const telLink = `tel:${clinic.phone.replace(/\s/g, "")}`;
   const whatsappLink = `https://wa.me/${clinic.phoneRaw}?text=${encodeURIComponent(clinic.whatsappMessage)}`;
 
   return (
     <section className="mx-auto max-w-7xl px-4 pb-16">
-      <div className="relative overflow-hidden rounded-[2.5rem] border bg-gradient-to-br from-brand-deep via-primary to-brand-emerald p-10 text-center md:p-16 shadow-2xl">
+      <div className="relative overflow-hidden rounded-[2.5rem] border bg-gradient-to-br from-brand-deep via-primary to-brand-emerald p-8 md:p-12 shadow-2xl">
         <div className="absolute inset-0 -z-10 opacity-35 bg-dot-pattern" />
         <div className="absolute -left-20 -top-20 hidden h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl md:block animate-pulse" />
         <div className="absolute -right-20 -bottom-20 hidden h-64 w-64 rounded-full bg-white/10 blur-3xl md:block" />
         
-        <span className="inline-flex items-center rounded-full bg-white/20 px-3.5 py-1 text-[11px] font-bold tracking-wide text-white uppercase backdrop-blur shadow-sm">
-          ✨ Premium Clinic Care
-        </span>
-        <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-white md:text-5xl leading-tight">Ready for healthier skin & hair?</h2>
-        <p className="mx-auto mt-4 max-w-xl text-white/95 text-xs md:text-sm leading-relaxed">
-          Book an appointment or speak with our clinical helpdesk on WhatsApp. Get specialized diagnostics calibrated directly for your skin type.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Button asChild size="lg" className="rounded-full bg-white text-primary hover:bg-white/95 font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
-            <Link to="/appointment"><CalendarCheck className="mr-2 h-4 w-4" /> Book Appointment</Link>
-          </Button>
-          <Button asChild size="lg" variant="outline" className="rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20 font-bold shadow-lg hover:-translate-y-0.5 transition-all">
-            <a href={whatsappLink} target="_blank" rel="noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp Consultation</a>
-          </Button>
-        </div>
-        <div className="mt-6 text-xs text-white/70 font-semibold">
-          Or call our clinic directly at <a href={telLink} className="underline hover:text-white">{clinic.phone}</a>
+        <div className="grid gap-8 lg:grid-cols-12 items-center">
+          {/* Left Column: CTA values */}
+          <div className="lg:col-span-5 text-left text-white space-y-4 relative z-10">
+            <span className="inline-flex items-center rounded-full bg-white/20 px-3.5 py-1 text-[11px] font-bold tracking-wide text-white uppercase backdrop-blur shadow-sm">
+              ✨ Direct Quick Booking
+            </span>
+            <h2 className="text-3xl font-extrabold tracking-tight text-white leading-tight md:text-4xl">Ready for healthier skin & hair?</h2>
+            <p className="text-white/90 text-xs md:text-sm leading-relaxed">
+              Fill out this fast consultation slot request, or instantly trigger an automated booking on our WhatsApp desk. Calibrated care is just a moment away.
+            </p>
+            
+            <div className="flex flex-col gap-3 pt-4 border-t border-white/25">
+              <a href={whatsappLink} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-full py-3.5 px-6 bg-white hover:bg-white/95 text-primary hover:-translate-y-0.5 transition-all text-xs font-extrabold shadow-md">
+                <MessageCircle className="h-4 w-4 text-emerald-600 fill-emerald-600" />
+                Book via WhatsApp
+              </a>
+              <a href={telLink} className="inline-flex items-center justify-center gap-2 rounded-full py-3.5 px-6 border border-white/30 bg-white/10 hover:bg-white/20 hover:-translate-y-0.5 transition-all text-xs font-extrabold text-white">
+                <PhoneCall className="h-4 w-4 text-white" />
+                Call Helpdesk: {clinic.phone}
+              </a>
+            </div>
+          </div>
+
+          {/* Right Column: Dynamic Form */}
+          <div className="lg:col-span-7 relative z-10">
+            <div className="rounded-[2rem] border border-white/20 bg-white/95 p-6 md:p-8 shadow-xl text-left">
+              {done ? (
+                <div className="text-center py-8 space-y-4 animate-fade-up">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 border">
+                    <CheckCircle2 className="h-6 w-6 text-emerald-600 font-extrabold" />
+                  </div>
+                  <h3 className="text-lg font-extrabold text-foreground">Booking Request Submitted!</h3>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                    Thank you! Our front desk team will verify and confirm your clinical slot shortly.
+                  </p>
+                  <Button onClick={() => setDone(false)} variant="outline" className="rounded-full text-xs font-bold mt-2">
+                    Book another slot
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <h3 className="text-base font-extrabold text-foreground tracking-tight border-b pb-2 flex items-center gap-1.5">
+                    <CalendarCheck className="h-4.5 w-4.5 text-primary" />
+                    Request a Direct Clinic Slot
+                  </h3>
+                  
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Full Name *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="John Doe" 
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full rounded-xl border bg-white px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20 text-foreground font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Phone Number *</label>
+                      <input 
+                        type="tel" 
+                        required 
+                        placeholder="+91" 
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full rounded-xl border bg-white px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20 text-foreground font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Clinical Service</label>
+                      <select 
+                        value={service}
+                        onChange={(e) => setService(e.target.value)}
+                        className="w-full rounded-xl border bg-white px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20 text-foreground font-semibold"
+                      >
+                        <option value="general">General Consultation</option>
+                        {services.map(s => <option key={s.slug} value={s.slug}>{s.title}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Preferred Date *</label>
+                      <input 
+                        type="date" 
+                        required 
+                        min={new Date().toISOString().split("T")[0]}
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        className="w-full rounded-xl border bg-white px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20 text-foreground font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Brief Description of Concern</label>
+                    <textarea 
+                      placeholder="acne breakouts, pigmentation issues..." 
+                      rows={2}
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="w-full rounded-xl border bg-white px-3 py-2 text-xs outline-none resize-none focus:ring-2 focus:ring-primary/20 text-foreground font-medium"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={booking} 
+                    className="w-full rounded-xl py-3 text-xs font-extrabold bg-primary hover:bg-primary/95 text-white transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                  >
+                    {booking ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Submitting Slot Inquiry...
+                      </>
+                    ) : (
+                      <>
+                        <CalendarCheck className="h-3.5 w-3.5" />
+                        Confirm Slot Request
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function CallbackPopup() {
+  const [show, setShow] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    // Initial popup after 5 seconds
+    const initialTimer = setTimeout(() => {
+      // Check if they already submitted it in this session to prevent spamming
+      const alreadySubmitted = sessionStorage.getItem("callback_submitted");
+      if (!alreadySubmitted) {
+        setShow(true);
+        // Disable scroll when popup appears to lock the screen interaction
+        document.body.style.overflow = "hidden";
+      }
+    }, 5000);
+
+    return () => {
+      clearTimeout(initialTimer);
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
+  const handleDismiss = () => {
+    setShow(false);
+    document.body.style.overflow = "unset"; // Restore scroll
+    
+    // Recurring interval: show again after 60 seconds of dismissal
+    setTimeout(() => {
+      const alreadySubmitted = sessionStorage.getItem("callback_submitted");
+      if (!alreadySubmitted) {
+        setShow(true);
+        document.body.style.overflow = "hidden"; // Re-lock scroll
+      }
+    }, 60000);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phone || !name) return;
+
+    if (phone.length !== 10) {
+      toast.error("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        name,
+        phone: `+91 ${phone}`,
+        email: "",
+        service: "Callback Request",
+        preferredDate: "ASAP",
+        message: "Instant Call-Back Request from homepage slide-over popup."
+      };
+      await createAppointment(payload);
+      sessionStorage.setItem("callback_submitted", "true");
+      setSuccess(true);
+      toast.success("Callback request submitted successfully!");
+      
+      // Close popup after 3 seconds of success message
+      setTimeout(() => {
+        setShow(false);
+        document.body.style.overflow = "unset"; // Restore scroll
+      }, 3000);
+    } catch (err: any) {
+      toast.error("Failed to request callback: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!show) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-md overflow-y-auto animate-fade-in">
+      {/* Click outside to close (acting as the lock screen backdrop) */}
+      <div className="absolute inset-0 cursor-default" onClick={handleDismiss} />
+
+      <div className="relative w-full max-w-md rounded-[2.5rem] border border-primary/20 bg-gradient-to-b from-white to-brand-frost/25 p-8 shadow-2xl animate-scale-up z-10">
+        <button 
+          onClick={handleDismiss}
+          className="absolute top-5 right-5 p-1.5 hover:bg-secondary/80 rounded-full text-muted-foreground transition-colors cursor-pointer border hover:text-foreground"
+        >
+          <X className="h-4.5 w-4.5" />
+        </button>
+
+        {success ? (
+          <div className="text-center py-6 space-y-4 animate-scale-up">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm">
+              <CheckCircle2 className="h-7 w-7 text-emerald-600" />
+            </div>
+            <h4 className="text-xl font-extrabold text-foreground">Callback Scheduled!</h4>
+            <p className="text-xs text-muted-foreground leading-relaxed max-w-xs mx-auto font-bold">
+              Thank you! Our front desk helpdesk team will dial your number (**+91 {phone}**) within 15 minutes to assist you.
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="text-center space-y-2">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary text-primary border border-primary/10 shadow-sm">
+                <PhoneCall className="h-6 w-6 text-primary animate-pulse" />
+              </div>
+              <h3 className="text-xl font-extrabold text-foreground tracking-tight">Get a Call-Back in 15 Mins</h3>
+              <p className="text-xs text-muted-foreground font-semibold max-w-xs mx-auto leading-relaxed">
+                Connect directly with Dr. Amit Jain's clinical helpdesk for instant guidance.
+              </p>
+            </div>
+
+            {/* High-Trust Verification Strip */}
+            <div className="grid grid-cols-3 gap-2 py-3 border-y border-dashed border-gray-200/80 my-4 text-[10px] text-center font-extrabold text-foreground bg-secondary/10 rounded-xl px-2">
+              <div className="flex flex-col items-center gap-1.5 border-r border-gray-200 last:border-0">
+                <span className="text-base select-none">🛡️</span>
+                <span className="leading-tight text-[9px] uppercase tracking-wide text-muted-foreground">Verified Specialists</span>
+              </div>
+              <div className="flex flex-col items-center gap-1.5 border-r border-gray-200 last:border-0">
+                <span className="text-base select-none">⭐</span>
+                <span className="leading-tight text-[9px] uppercase tracking-wide text-muted-foreground">4.8★ Google Rated</span>
+              </div>
+              <div className="flex flex-col items-center gap-1.5 last:border-0">
+                <span className="text-base select-none">🔒</span>
+                <span className="leading-tight text-[9px] uppercase tracking-wide text-muted-foreground">Secure Privacy</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {/* Name field */}
+              <div className="relative">
+                <User className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
+                <input 
+                  type="text" 
+                  required 
+                  placeholder="Enter Your Full Name" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-xl border pl-10 pr-4 py-3 text-xs outline-none focus:ring-2 focus:ring-primary/20 text-foreground font-semibold bg-white"
+                />
+              </div>
+
+              {/* Phone field with Country flag selector */}
+              <div className="relative">
+                <div className="absolute left-3.5 top-3 flex items-center gap-1">
+                  <span className="text-xs font-bold text-foreground select-none">🇮🇳</span>
+                  <span className="text-[10px] font-extrabold text-muted-foreground select-none">+91</span>
+                </div>
+                <input 
+                  type="tel" 
+                  required 
+                  pattern="[0-9]{10}"
+                  placeholder="Enter 10-Digit Mobile Number" 
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  className="w-full rounded-xl border pl-16 pr-4 py-3 text-xs outline-none focus:ring-2 focus:ring-primary/20 text-foreground font-semibold bg-white"
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full rounded-xl py-4 text-xs font-extrabold bg-primary hover:bg-primary/95 text-white transition-all shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer hover:shadow-lg active:scale-[0.99] uppercase tracking-wider"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Scheduling call...
+                </>
+              ) : (
+                <>
+                  <PhoneCall className="h-4 w-4" />
+                  Call Me Back Immediately
+                </>
+              )}
+            </button>
+
+            <p className="text-[9px] text-muted-foreground text-center font-semibold leading-normal block">
+              🔒 Strictly Confidential. Your contact information is protected under medical privacy protocols.
+            </p>
+          </form>
+        )}
+      </div>
+    </div>
   );
 }
