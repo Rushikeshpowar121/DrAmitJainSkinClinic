@@ -435,28 +435,98 @@ function ServicesOverview() {
 
 function WhyChooseUs() {
   const items = [
-    { t: "Expert-led consultations", d: "Every diagnosis and therapy procedure is directly formulated and delivered by Dr. Amit Jain." },
-    { t: "State-of-the-art tech", d: "Equipped with the latest FDA-cleared aesthetic lasers and double-spin clinical PRP centrifuges." },
-    { t: "Research-backed protocols", d: "Every medication and procedure is heavily rooted in verified dermatology research studies." },
-    { t: "Transparent clinical costs", d: "Upfront pricing schedules without any forced add-ons or sudden cosmetic packages." },
-    { t: "Melanin-calibrated care", d: "Specially adjusted skin treatments focused on melanocyte safety for rich Indian skin." },
-    { t: "Luxurious patient comfort", d: "A calm, highly sterilized clinic environment designed with close individual attention." },
+    { 
+      t: "Expert-Led Care Only", 
+      d: "Unlike general aesthetic clinics, every consultation, diagnosis, and clinical procedure is directly handled by Dr. Amit Jain himself.",
+      icon: Award
+    },
+    { 
+      t: "FDA-Cleared Technology", 
+      d: "Equipped with gold-standard, FDA-cleared aesthetic lasers and double-spin clinical PRP centrifuges for maximum efficacy.",
+      icon: ShieldCheck
+    },
+    { 
+      t: "Indian Skin Specialization", 
+      d: "Calibrated protocols specially designed for Type IV-VI Indian skin, focusing strictly on melanocyte safety to prevent post-treatment pigmentation.",
+      icon: Heart
+    },
+    { 
+      t: "Transparent & Ethical Pricing", 
+      d: "Upfront pricing schedules with absolutely zero forced cosmetic packages, hidden add-ons, or sales targets.",
+      icon: CheckCircle2
+    },
   ];
+
   return (
-    <section className="relative isolate overflow-hidden py-14 md:py-16">
-      <div className="absolute inset-0 bg-gradient-to-b from-brand-mint/15 to-brand-frost/25 -z-10" />
+    <section className="relative isolate overflow-hidden py-16 md:py-20">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/15 to-transparent -z-10" />
+      
       <div className="mx-auto max-w-7xl px-4">
-        <SectionHeading eyebrow="Why choose our clinic" title="Premium dermatology built on science" />
-        <div className="grid gap-5 md:grid-cols-3">
-          {items.map((it) => (
-            <div key={it.t} className="group rounded-2xl border bg-white/70 p-6 shadow-sm border-glow-hover hover:bg-white/95 transition-all">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-primary transition-all duration-300 group-hover:scale-105">
-                <CheckCircle2 className="h-5 w-5 text-primary" />
+        <SectionHeading 
+          eyebrow="Clinical Integrity" 
+          title="Why Choose Dr. Amit Jain" 
+        />
+        
+        <div className="mt-12 grid gap-10 lg:grid-cols-12 items-center">
+          {/* Asymmetrical Left Value Proposition Card */}
+          <div className="lg:col-span-5 animate-fade-up">
+            <div className="relative overflow-hidden rounded-[2.5rem] border border-primary/20 bg-white p-8 md:p-10 shadow-xl bg-dot-pattern">
+              <div className="absolute -right-8 -top-8 -z-10 h-32 w-32 rounded-full bg-secondary/30 blur-2xl" />
+              
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-secondary px-3.5 py-1.5 text-xs font-bold text-primary shadow-3xs">
+                <Award className="h-3.5 w-3.5" /> MD - Dermatology (Skin)
+              </span>
+              
+              <h3 className="mt-6 text-2xl md:text-3xl font-extrabold tracking-tight text-foreground leading-[1.15]">
+                Dermatology built on clinical <span className="text-gradient">Integrity</span>
+              </h3>
+              
+              <p className="mt-4 text-xs md:text-sm text-muted-foreground leading-relaxed">
+                Dr. Amit Jain believes that skincare is a medical science, not a commercial transaction. We completely reject the aggressive sales targets common in aesthetic clinics, prioritizing your skin's health above all else.
+              </p>
+              
+              <div className="mt-8 space-y-4 border-t border-border/40 pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-primary font-bold text-xs">
+                    ✓
+                  </div>
+                  <span className="text-xs md:text-sm font-bold text-foreground">10+ Years Active Clinical Experience</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-primary font-bold text-xs">
+                    ✓
+                  </div>
+                  <span className="text-xs md:text-sm font-bold text-foreground">15,000+ Successfully Treated Patients</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-primary font-bold text-xs">
+                    ✓
+                  </div>
+                  <span className="text-xs md:text-sm font-bold text-foreground">100% Evidence-Based Medical Protocols</span>
+                </div>
               </div>
-              <div className="mt-4 font-bold text-foreground text-base tracking-tight">{it.t}</div>
-              <div className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{it.d}</div>
             </div>
-          ))}
+          </div>
+          
+          {/* Asymmetrical Right Features Grid */}
+          <div className="lg:col-span-7 grid gap-6 sm:grid-cols-2 animate-fade-up">
+            {items.map((it) => (
+              <div 
+                key={it.t} 
+                className="group relative overflow-hidden rounded-3xl border border-primary/10 bg-white/70 p-6 shadow-sm transition-all duration-500 hover:-translate-y-1 hover:border-primary/20 hover:bg-white hover:shadow-xl"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-primary transition-all duration-500 group-hover:scale-105 group-hover:bg-primary group-hover:text-white shadow-3xs ring-4 ring-secondary/30">
+                  <it.icon className="h-5 w-5" />
+                </div>
+                <h4 className="mt-4 font-extrabold text-foreground text-base tracking-tight transition-colors duration-300 group-hover:text-primary">
+                  {it.t}
+                </h4>
+                <p className="mt-2 text-xs md:text-sm text-muted-foreground leading-relaxed">
+                  {it.d}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
